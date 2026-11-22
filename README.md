@@ -33,13 +33,26 @@ No hace falta instalar Node: keleun lo trae.
 
 ## Comprobar el instalador
 
-Cada versión publica `SHA256SUMS.txt`. En PowerShell, junto al instalador:
+El instalador todavía no tiene firma de código de Windows (por eso el aviso de SmartScreen). Puedes comprobar que es el
+original de dos formas:
 
-```
-Get-FileHash .\keleun-0.9.2-setup.exe
-```
+1. **Huella SHA-256** (lo más sencillo). En PowerShell, junto al instalador:
 
-El resultado debe ser igual al de `SHA256SUMS.txt`.
+   ```
+   Get-FileHash .\keleun-0.9.2-setup.exe
+   ```
+
+   El resultado debe ser igual al de `SHA256SUMS.txt` de la misma versión.
+
+2. **Atestación firmada** (Sigstore). Cada instalador publicado que pasa la prueba en Windows limpio recibe una
+   atestación firmada de GitHub que dice que ese archivo exacto lo verificó el flujo de este repositorio. Con
+   [GitHub CLI](https://cli.github.com):
+
+   ```
+   gh attestation verify .\keleun-0.9.2-setup.exe --repo AudomaroDuran/keleun
+   ```
+
+   Las atestaciones se ven en [la página de atestaciones](https://github.com/AudomaroDuran/keleun/attestations).
 
 ## Probado en una Windows limpia
 

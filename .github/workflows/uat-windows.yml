@@ -15,6 +15,9 @@ on:
 
 permissions:
   contents: read
+  # Para la atestación: un certificado de Sigstore a nombre de este flujo y el registro de la atestación.
+  id-token: write
+  attestations: write
 
 jobs:
   uat:
@@ -61,6 +64,13 @@ jobs:
           claude --version
           $setup = (Get-ChildItem dist\keleun-*-setup.exe | Select-Object -First 1).FullName
           node uat/uat-install.ts $setup "$env:RUNNER_TEMP\uat"
+
+      # Solo si la UAT pasó: atestación firmada (Sigstore) de que este instalador, con esta huella, lo verificó este flujo.
+      # Se comprueba con: gh attestation verify keleun-<versión>-setup.exe --repo AudomaroDuran/keleun
+      - name: Atestación del instalador probado
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/keleun-*-setup.exe
 
       - uses: actions/upload-artifact@v4
         if: always()
