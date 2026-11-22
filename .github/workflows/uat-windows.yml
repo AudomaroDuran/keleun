@@ -36,9 +36,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = '${{ github.event.release.tag_name || inputs.tag }}'
-          if ($tag) { gh release download $tag --repo ${{ github.repository }} --pattern "keleun-*-setup.exe" --pattern "SHA256SUMS.txt" --dir dist }
-          else { gh release download --repo ${{ github.repository }} --pattern "keleun-*-setup.exe" --pattern "SHA256SUMS.txt" --dir dist }
+          # Al publicar, los archivos pueden terminar de subir después de que arranca este flujo: se espera hasta 10 min.
+          for ($i = 0; $i -lt 20; $i++) {
+            if ($tag) { gh release download $tag --repo ${{ github.repository }} --pattern "keleun-*-setup.exe" --pattern "SHA256SUMS.txt" --dir dist --clobber }
+            else { gh release download --repo ${{ github.repository }} --pattern "keleun-*-setup.exe" --pattern "SHA256SUMS.txt" --dir dist --clobber }
+            if ((Test-Path dist\SHA256SUMS.txt) -and (Get-ChildItem dist\keleun-*-setup.exe -ErrorAction SilentlyContinue)) { break }
+            "Todavía no están los archivos de la versión; reintento en 30 s"
+            Start-Sleep -Seconds 30
+          }
           $setup = Get-ChildItem dist\keleun-*-setup.exe | Select-Object -First 1
+          if (-not $setup) { throw "La versión no tiene instalador" }
           $want = (Get-Content dist\SHA256SUMS.txt).Split(' ')[0]
           $got = (Get-FileHash $setup.FullName).Hash.ToLower()
           if ($want -ne $got) { throw "La huella no coincide: $got <> $want" }
