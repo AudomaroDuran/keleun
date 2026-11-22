@@ -1,0 +1,67 @@
+name: UAT en Windows limpio
+
+# Instala la versión publicada en una Windows nueva y la prueba de punta a punta sin Node (uat/uat-install.ts):
+# instalación silenciosa, accesos directos, preparar un proyecto, Claude Code (hooks y MCP), registrar, en vivo,
+# cerrar y desinstalar. El runner no tiene cuenta de Claude: se omite solo la conversación.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Versión a probar (vacío = la última)
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  uat:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Descargar el instalador publicado
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.event.release.tag_name || inputs.tag }}'
+          if ($tag) { gh release download $tag --repo ${{ github.repository }} --pattern "keleun-*-setup.exe" --pattern "SHA256SUMS.txt" --dir dist }
+          else { gh release download --repo ${{ github.repository }} --pattern "keleun-*-setup.exe" --pattern "SHA256SUMS.txt" --dir dist }
+          $setup = Get-ChildItem dist\keleun-*-setup.exe | Select-Object -First 1
+          $want = (Get-Content dist\SHA256SUMS.txt).Split(' ')[0]
+          $got = (Get-FileHash $setup.FullName).Hash.ToLower()
+          if ($want -ne $got) { throw "La huella no coincide: $got <> $want" }
+          "Instalador $($setup.Name) · SHA-256 verificado"
+
+      - name: Instalar Claude Code (sin cuenta)
+        shell: pwsh
+        run: |
+          irm https://claude.ai/install.ps1 | iex
+          "$env:USERPROFILE\.local\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Dependencias de la prueba
+        working-directory: uat
+        run: npm install --no-audit --no-fund
+
+      - name: UAT
+        shell: pwsh
+        env:
+          UAT_APP_NAME: keleun
+          UAT_NO_CLAUDE_LOGIN: '1'
+        run: |
+          claude --version
+          $setup = (Get-ChildItem dist\keleun-*-setup.exe | Select-Object -First 1).FullName
+          node uat/uat-install.ts $setup "$env:RUNNER_TEMP\uat"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uat-resultados
+          path: ${{ runner.temp }}/uat
