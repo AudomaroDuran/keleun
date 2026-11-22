@@ -26,7 +26,7 @@ Versión beta para Windows 10 y 11 (64 bits).
 5. En el Puente: **Enviar a Claude** para que lea el proyecto y proponga el rumbo; si te gusta, contéstale «Sí,
    créalas».
 
-La [guía completa (PDF)](docs/Guia-de-instalacion-keleun-0.9.1.pdf) explica cada paso con capturas, cómo revisar y
+La [guía completa (PDF)](docs/Guia-de-instalacion-keleun-0.9.2.pdf) explica cada paso con capturas, cómo revisar y
 aprobar el trabajo del agente y los problemas comunes.
 
 No hace falta instalar Node: keleun lo trae.
@@ -36,7 +36,7 @@ No hace falta instalar Node: keleun lo trae.
 Cada versión publica `SHA256SUMS.txt`. En PowerShell, junto al instalador:
 
 ```
-Get-FileHash .\keleun-0.9.1-setup.exe
+Get-FileHash .\keleun-0.9.2-setup.exe
 ```
 
 El resultado debe ser igual al de `SHA256SUMS.txt`.
@@ -45,7 +45,8 @@ El resultado debe ser igual al de `SHA256SUMS.txt`.
 
 Cada versión publicada se instala en una máquina Windows nueva de GitHub Actions y se prueba de punta a punta sin Node:
 instalación silenciosa, accesos directos, preparar un proyecto, conexión con Claude Code (hooks y servidor MCP),
-registrar trabajo, verlo en vivo, cerrar sin procesos colgados y desinstalar. Ver la pestaña
+registrar trabajo, verlo en vivo, una conversación con permiso aprobado en la app (con un Claude Code simulado: la
+máquina de pruebas no tiene cuenta de Claude), cerrar sin procesos colgados y desinstalar. Ver la pestaña
 [Actions](https://github.com/AudomaroDuran/keleun/actions) (flujo «UAT en Windows limpio») y `uat/uat-install.ts`.
 
 ## ¿Algo falló?

@@ -25,6 +25,9 @@ const NAME = process.env.UAT_APP_NAME ?? 'keleun UAT';
 // UAT_NO_CLAUDE_LOGIN=1: máquina sin cuenta de Claude. Se prueba el registro con el comando keleun (sin Node) y los
 // hooks directamente, y se omite la conversación (necesita una cuenta).
 const NO_LOGIN = !!process.env.UAT_NO_CLAUDE_LOGIN;
+// UAT_FAKE_CLAUDE=<ruta a uat-claude-simulado.mjs>: sin cuenta, la conversación se prueba con un Claude Code simulado que
+// habla su mismo protocolo y pide un permiso por el servidor MCP de keleun (todo el camino de la app, menos el modelo).
+const FAKE = process.env.UAT_FAKE_CLAUDE ? resolve(process.env.UAT_FAKE_CLAUDE) : undefined;
 const LOCAL = process.env.LOCALAPPDATA!;
 const INSTALL = join(LOCAL, 'Programs', NAME);
 const EXE = join(INSTALL, `${NAME}.exe`);
@@ -95,7 +98,7 @@ try {
     app = spawn(EXE, [`--remote-debugging-port=${port}`, '--project', PROJECT], {
       // Datos propios: el nombre interno de la app es «keleun»; si la persona tiene su keleun abierto, compartirían el
       // candado de instancia única y esta se cerraría. En la computadora de un amigo no hace falta.
-      env: personEnv({ KELEUN_BIN_DIR: BIN, CAIRN_DESKTOP_USERDATA: join(work, 'userdata') }), detached: true, stdio: 'ignore',
+      env: personEnv({ KELEUN_BIN_DIR: BIN, CAIRN_DESKTOP_USERDATA: join(work, 'userdata'), ...(FAKE ? { BITACORA_CLAUDE_BIN: JSON.stringify([process.execPath, FAKE]) } : {}) }), detached: true, stdio: 'ignore',
     });
     app.unref();
     // El diálogo es un TaskDialog: su botón («command link») no expone patrones de UI Automation. Como es el botón por
@@ -190,6 +193,21 @@ $r`);
       throw new Error(`${(e as Error).message.split('\n')[0]} · ${state}`);
     }
     await page!.screenshot({ path: join(OUT, '2-puente-en-vivo.png') });
+  });
+
+  if (FAKE) await step('conversación con Claude Code simulado: pide permiso, se permite en la app y responde', async () => {
+    await page!.evaluate(() => { location.hash = '#/session/new'; });
+    await page!.locator('#composer textarea').waitFor({ timeout: 15000 });
+    await page!.locator('#composer textarea').fill('Corre un comando de prueba');
+    await page!.locator('#composer button[type="submit"]').click();
+    await page!.waitForFunction(() => location.hash.startsWith('#/session/') && !location.hash.endsWith('/new'), undefined, { timeout: 30000 });
+    const card = page!.locator('.perm-card', { hasText: 'echo hola desde la UAT' });
+    await card.waitFor({ timeout: 30000 });
+    await page!.screenshot({ path: join(OUT, '3-permiso.png') });
+    await card.locator('[data-allow="1"]').click();
+    await page!.locator('.msg.assistant .bubble', { hasText: 'listo · permiso allow' }).first().waitFor({ timeout: 30000 });
+    await page!.screenshot({ path: join(OUT, '4-conversacion.png') });
+    return 'permiso pedido por el MCP de keleun, permitido en la app; respondió';
   });
 
   if (!NO_LOGIN) await step('conversación desde la app instalada (sin Node): responde', async () => {

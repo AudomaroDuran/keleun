@@ -2,7 +2,8 @@ name: UAT en Windows limpio
 
 # Instala la versión publicada en una Windows nueva y la prueba de punta a punta sin Node (uat/uat-install.ts):
 # instalación silenciosa, accesos directos, preparar un proyecto, Claude Code (hooks y MCP), registrar, en vivo,
-# cerrar y desinstalar. El runner no tiene cuenta de Claude: se omite solo la conversación.
+# conversación (con un Claude Code simulado que pide permiso por el MCP de keleun: el runner no tiene cuenta de Claude),
+# cerrar y desinstalar.
 on:
   release:
     types: [published]
@@ -55,6 +56,7 @@ jobs:
         env:
           UAT_APP_NAME: keleun
           UAT_NO_CLAUDE_LOGIN: '1'
+          UAT_FAKE_CLAUDE: uat/uat-claude-simulado.mjs
         run: |
           claude --version
           $setup = (Get-ChildItem dist\keleun-*-setup.exe | Select-Object -First 1).FullName
