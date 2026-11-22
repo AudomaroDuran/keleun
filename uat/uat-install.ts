@@ -132,8 +132,8 @@ $r`);
     return page.url().split('?')[0];
   });
 
-  await step('lo que preparó: docs, comandos keleun y bitacora, hooks y skill', async () => {
-    for (const f of ['bitacora.config.json', 'docs', 'AGENTS.md', '.claude/settings.local.json', '.claude/skills/bitacora/SKILL.md']) {
+  await step('lo que preparó: docs, comandos keleun y bitacora, hooks y skills (bitacora y keleun-rumbo)', async () => {
+    for (const f of ['bitacora.config.json', 'docs', 'AGENTS.md', '.claude/settings.local.json', '.claude/skills/bitacora/SKILL.md', '.claude/skills/keleun-rumbo/SKILL.md']) {
       if (!existsSync(join(PROJECT, f))) throw new Error(`falta ${f}`);
     }
     for (const f of ['keleun.cmd', 'bitacora.cmd', 'keleun', 'bitacora']) if (!existsSync(join(BIN, f))) throw new Error(`falta el comando ${f}`);
@@ -143,6 +143,16 @@ $r`);
     const v = spawnSync(join(BIN, 'keleun.cmd'), ['roadmap'], { cwd: PROJECT, env: personEnv(), encoding: 'utf8', shell: true });
     if (v.status !== 0) throw new Error(`keleun roadmap falló: ${v.stderr || v.stdout}`);
     return `hook: ${cmd.slice(0, 70)}…`;
+  });
+
+  await step('Rumbo ofrece «Planear con Claude»', async () => {
+    await page!.evaluate(() => { location.hash = '#/rumbo'; });
+    await page!.locator('[data-plan-new]').first().waitFor({ timeout: 20000 });
+    await page!.screenshot({ path: join(OUT, '1b-rumbo.png') });
+    const label = (await page!.locator('[data-plan-new]').first().textContent())?.trim() ?? '';
+    await page!.evaluate(() => { location.hash = '#/'; });
+    await page!.locator('.route-strip, .rs-empty').first().waitFor({ timeout: 20000 });
+    return label;
   });
 
   await step('el PATH del usuario tiene los comandos (para Claude Code desde la terminal)', async () => {
