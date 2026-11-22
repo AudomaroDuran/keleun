@@ -26,7 +26,7 @@ Versión beta para Windows 10 y 11 (64 bits).
 5. En el Puente: **Enviar a Claude** para que lea el proyecto y proponga el rumbo; si te gusta, contéstale «Sí,
    créalas».
 
-La [guía completa (PDF)](docs/Guia-de-instalacion-keleun-0.9.3.pdf) explica cada paso con capturas, cómo revisar y
+La [guía completa (PDF)](docs/Guia-de-instalacion-keleun-0.9.4.pdf) explica cada paso con capturas, cómo revisar y
 aprobar el trabajo del agente y los problemas comunes.
 
 No hace falta instalar Node: keleun lo trae.
@@ -39,7 +39,7 @@ original de dos formas:
 1. **Huella SHA-256** (lo más sencillo). En PowerShell, junto al instalador:
 
    ```
-   Get-FileHash .\keleun-0.9.3-setup.exe
+   Get-FileHash .\keleun-0.9.4-setup.exe
    ```
 
    El resultado debe ser igual al de `SHA256SUMS.txt` de la misma versión.
@@ -49,7 +49,7 @@ original de dos formas:
    [GitHub CLI](https://cli.github.com):
 
    ```
-   gh attestation verify .\keleun-0.9.3-setup.exe --repo AudomaroDuran/keleun
+   gh attestation verify .\keleun-0.9.4-setup.exe --repo AudomaroDuran/keleun
    ```
 
    Las atestaciones se ven en [la página de atestaciones](https://github.com/AudomaroDuran/keleun/attestations).
